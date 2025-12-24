@@ -107,19 +107,31 @@ class SignalCompletionProvider {
         vscode.CompletionItemKind.Property
       );
 
+      // Simple detail with signal description
       completion.detail = signal.description;
-      completion.documentation = new vscode.MarkdownString(
-        `**${signal.name}** - ${signal.description}\n\nCategory: ${signal.category}`
-      );
 
       // Add insert text with proper formatting
       completion.insertText = signal.name;
 
-      // Set priority for common signals
-      if (['primary', 'secondary', 'sm', 'md', 'lg', 'hoverEnlarge'].includes(signal.name)) {
-        completion.sortText = `0${signal.name}`;
+      // Set priority and sort by category
+      const categoryPriority = {
+        'layer': 0,
+        'lease': 1, 
+        'spread': 2,
+        'composite': 3,
+        'signal': 4
+      };
+      
+      const priority = categoryPriority[signal.category] || 4;
+      
+      // Common signals get higher priority within their category
+      const commonSignals = ['primary', 'secondary', 'sm', 'md', 'lg', 'hoverEnlarge', 'children', 'onClick', 'disabled'];
+      const isCommon = commonSignals.includes(signal.name);
+      
+      if (isCommon) {
+        completion.sortText = `${priority}0${signal.name}`;
       } else {
-        completion.sortText = `1${signal.name}`;
+        completion.sortText = `${priority}1${signal.name}`;
       }
 
       completions.push(completion);

@@ -1,65 +1,128 @@
-# signal-autocomplete README
+# Signal UI Autocomplete Extension
 
-This is the README for your extension "signal-autocomplete". After writing up a brief description, we recommend including the following sections.
+A VS Code extension that provides intelligent autocomplete for Signal UI components, offering context-aware signal suggestions directly in your JSX/TSX code.
 
-## Features
+## Philosophy: Signal UI
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+Signal UI is a source-first, minimalist, framework-agnostic component library built on the principle of **intention over configuration**. Unlike traditional component libraries that rely on variant enums, configuration schemas, and opaque abstractions, Signal UI embraces a radically different approach:
 
-For example if there is an image subfolder under your extension project workspace:
+### Core Principles
 
-\!\[feature X\]\(images/feature-x.png\)
+**1. Ownership Over Abstraction**
+- Components are copied into your repository—you own the code completely
+- No vendor lock-in, no runtime dependencies, no black boxes
+- The file itself is the product; you read, edit, and ship it directly
+- No hidden logic or helper functions obscuring behavior
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+**2. Intention Over Configuration**
+- No `variant="primary"` or `size="lg"` enums
+- Props are plain English signals: `primary`, `lg`, `hoverEnlarge`
+- Signals express what you want, not how it's configured
+- Declarative, readable, and immediately understandable
 
-## Requirements
+**3. Signals, Not Variants**
+- Signals are static, declarative inputs—not reactive systems
+- Components read props → output classes/attributes directly
+- No combinatorial APIs or variant explosion
+- Signals are composable, optional, and memorable
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+**4. Minimal Foundation, Infinite Extension**
+- Each component ships with one semantic foundation and zero forced variations
+- Everything else is opt-in and user-editable
+- HTML already provides state; we listen and style on top
+- Never re-model browser behavior
 
-## Extension Settings
+### Signal Types
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+**A. Structural Signals (Identity)**
+- Define what the component is: `primary`, `secondary`, `sm`, `lg`
+- Grouped by category (tone, size, shape)
+- Only one per group applies—if multiple passed, last wins
+- No warnings, no magic—deterministic and predictable
 
-For example:
+**B. Behavioral Signals (Interaction Intent)**
+- Define how it behaves: `hoverEnlarge`, `pressShrink`, `focusJump`
+- Verb-intent naming makes them expressive and memorable
+- Optional and composable—use only what you need
 
-This extension contributes the following settings:
+**C. JS-Level Signals**
+- Map intent to tiny inline JavaScript behavior
+- Examples: `submitForm`, `confirmOnClick`
+- Implemented inline, explicitly—no helpers or abstractions
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Extension Features
 
-## Known Issues
+### Intelligent Component Discovery
+The extension automatically scans your workspace for Signal UI components in multiple locations:
+- `components/ComponentName.jsx`
+- `src/components/ComponentName.jsx`
+- `components/signals/ComponentName.jsx`
+- `src/components/signals/ComponentName.jsx`
+- `signals/ComponentName.jsx`
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+Supports both JavaScript (`.js`, `.jsx`) and TypeScript (`.ts`, `.tsx`) files.
 
-## Release Notes
+### Context-Aware Autocomplete
+- Activates only when typing inside JSX component props
+- Detects component names and provides relevant signal suggestions
+- Filters suggestions based on current input for rapid discovery
+- Supports all JavaScript/TypeScript variants including JSX/TSX
 
-Users appreciate release notes as you update your extension.
+### Signal Classification
+The extension categorizes signals to provide intelligent prioritization:
 
-### 1.0.0
+1. **Layer Signals** - Foundation styling layers
+2. **Lease Signals** - Contract-based conditional styling
+3. **Spread Signals** - Native attribute spreading
+4. **Composite Signals** - Complex signal combinations
+5. **Standard Signals** - Direct signal usage
 
-Initial release of ...
+### Smart Prioritization
+- Common signals (`primary`, `secondary`, `sm`, `md`, `lg`, `hoverEnlarge`) appear first
+- Category-based sorting ensures logical organization
+- Contextual filtering reduces cognitive load
 
-### 1.0.1
+## How It Works
 
-Fixed issue #.
+### Component Scanning Process
 
-### 1.1.0
+1. **File Discovery**: When you trigger autocomplete in a JSX prop, the extension:
+   - Extracts the component name from the current JSX tag
+   - Scans predefined workspace folders for matching component files
+   - Supports multiple file extensions (`.js`, `.jsx`, `.ts`, `.tsx`)
 
-Added features X, Y, and Z.
+2. **Signal Extraction**: Once a component file is found:
+   - Parses the file content to identify all signal usage patterns
+   - Categorizes signals by type (layer, lease, spread, composite, standard)
+   - Extracts signal descriptions and context from layer definitions
 
----
+3. **Intelligent Caching**: 
+   - 30-second cache prevents redundant file system operations
+   - Automatic cache cleanup prevents memory bloat
+   - Manual cache clearing available for development
 
-## Working with Markdown
+### Signal Pattern Recognition
 
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
+The extension recognizes several Signal UI patterns:
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
+```javascript
+// Layer definitions and usage
+const foundation = layer("foundation");
+foundation("bg", "primary");
+foundation("text", "secondary");
 
-## For more information
+// Lease contracts
+lease("hover", "hoverEnlarge");
+lease("focus", "focusRing");
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+// Spread signals
+spread("native", "type");
+spread("form", "onClick");
 
-**Enjoy!**
+// Composite signals
+signals.hoverEnlarge && (() => (element.classList.add("hover-scale")))();
+
+// Direct signal usage
+signals.primary
+signals.secondary
+signals.hoverEnlarge
