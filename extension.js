@@ -15,13 +15,21 @@ class SignalCompletionProvider {
     const line = document.lineAt(position);
     const lineText = line.text.substring(0, position.character);
     
+    console.log(`Completion requested at line ${position.line + 1}, char ${position.character}`);
+    console.log(`Line text: "${lineText}"`);
+    
     // Check if we're inside a JSX component prop
-    if (!this.isInJSXProp(lineText, document, position)) {
+    const inJSXProp = this.isInJSXProp(lineText, document, position);
+    console.log(`In JSX prop: ${inJSXProp}`);
+    
+    if (!inJSXProp) {
       return undefined;
     }
 
     // Get the component name
     const componentName = this.extractComponentName(document, position);
+    console.log(`Component name: ${componentName}`);
+    
     if (!componentName) {
       return undefined;
     }
@@ -29,55 +37,67 @@ class SignalCompletionProvider {
     // Get the current word being typed
     const wordRange = document.getWordRangeAtPosition(position, /[a-zA-Z0-9]+/);
     const currentWord = wordRange ? document.getText(wordRange) : '';
+    console.log(`Current word: "${currentWord}"`);
 
     // Get signals for this specific component
     const signals = await this.scanner.getSignalsForComponent(componentName);
+    console.log(`Signals found: ${signals.length}`);
     
-    // Return signal suggestions
+    // Return signal suggestions - show all if no word is being typed, filter if typing
     return this.getSignalCompletions(signals, currentWord);
   }
 
-  isInJSXProp(lineText, document, position) {
-    // Check if current file is JavaScript/TypeScript
-    if (!['javascript', 'typescript', 'typescriptreact', 'javascriptreact'].includes(document.languageId)) {
-      return false;
-    }
-
-    // Get full context around cursor for better detection
+  /**
+   * Extract component name from current context
+   */
+  extractComponentName(document, position) {
     const textBeforeCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
     
-    // Pattern 1: Inside opening tag with props (e.g., <Button |)
-    if (/<([A-Z][a-zA-Z0-9]*)\s+(?:[a-zA-Z][a-zA-Z0-9]*\s*=\s*["'][^"']*["']\s*)*[a-zA-Z]*$/.test(textBeforeCursor)) {
-      return true;
+    // Pattern to find the current JSX opening tag
+    const tagMatch = textBeforeCursor.match(/<([A-Z][a-zA-Z0-9]*)[^>]*$/);
+    if (tagMatch) {
+      return tagMatch[1];
     }
     
-    // Pattern 2: After prop name equals sign (e.g., <Button primary=|)
-    if (/<([A-Z][a-zA-Z0-9]*)[^>]*[a-zA-Z][a-zA-Z0-9]*\s*=\s*["']?$/.test(textBeforeCursor)) {
-      return true;
+    // Pattern to find self-closing tag
+    const selfClosingMatch = textBeforeCursor.match(/<([A-Z][a-zA-Z0-9]*)[^>]*\/>$/);
+    if (selfClosingMatch) {
+      return selfClosingMatch[1];
     }
+    
+    return null;
+  }
 
-    // Pattern 3: Between props (e.g., <Button primary |)
-    if (/<([A-Z][a-zA-Z0-9]*)[^>]*\s+[a-zA-Z]*$/.test(textBeforeCursor)) {
-      // Ensure we're not inside a string literal
-      const lastQuote = textBeforeCursor.lastIndexOf('"');
-      const lastSingleQuote = textBeforeCursor.lastIndexOf("'");
-      if (lastQuote === -1 && lastSingleQuote === -1) return true;
-      
-      // Check if cursor is after an even number of quotes (outside strings)
-      const doubleQuoteCount = (textBeforeCursor.match(/"/g) || []).length;
-      const singleQuoteCount = (textBeforeCursor.match(/'/g) || []).length;
-      return doubleQuoteCount % 2 === 0 && singleQuoteCount % 2 === 0;
-    }
-
+  isInJSXProp(lineText, document, position) {
+  // Check if current file is JavaScript/TypeScript
+  if (!['javascript', 'typescript', 'typescriptreact', 'javascriptreact'].includes(document.languageId)) {
     return false;
   }
 
-  getSignalCompletions(currentWord) {
-    const signals = getAllSignals();
+  // Get full context around cursor
+  const textBeforeCursor = document.getText(new vscode.Range(new vscode.Position(0, 0), position));
+  
+  console.log('Checking JSX prop detection...');
+  console.log(`Text before cursor: "${textBeforeCursor.slice(-100)}"`);
+  
+  // Simple pattern: look for <ComponentName ... where cursor is after opening tag
+  const jsxPattern = /<([A-Z][a-zA-Z0-9]*)\s+[^>]*$/;
+  const match = textBeforeCursor.match(jsxPattern);
+  
+  if (match) {
+    console.log(`Inside JSX props of component: ${match[1]}`);
+    return true;
+  }
+  
+  console.log('Not inside JSX props area');
+  return false;
+}
+
+  getSignalCompletions(signals, currentWord) {
     const completions = [];
 
     signals.forEach(signal => {
-      // Filter by current word if user is typing
+      // Show all signals if no current word, otherwise filter by current word
       if (currentWord && !signal.name.toLowerCase().includes(currentWord.toLowerCase())) {
         return;
       }
@@ -120,7 +140,7 @@ function activate(context) {
     // Support JavaScript, TypeScript, and JSX/TSX files
     ['javascript', 'typescript', 'typescriptreact', 'javascriptreact'],
     new SignalCompletionProvider(),
-    // Trigger on letters and numbers
+    // Trigger on letters and numbers only
     'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   );
 

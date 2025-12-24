@@ -20,23 +20,21 @@ class ComponentScanner {
     }
 
     for (const workspaceFolder of workspaceFolders) {
-      const componentsPath = path.join(workspaceFolder.uri.fsPath, 'src', 'components');
-      const signalsPath = path.join(workspaceFolder.uri.fsPath, 'src', 'components', 'signals');
-      
-      // Try both components/ and components/signals/ folders
+      // Check both root components/ and src/components/ folders
       const possiblePaths = [
-        path.join(componentsPath, `${componentName}.jsx`),
-        path.join(componentsPath, `${componentName}.js`),
-        path.join(componentsPath, `${componentName}.tsx`),
-        path.join(componentsPath, `${componentName}.ts`),
-        path.join(signalsPath, `${componentName}.jsx`),
-        path.join(signalsPath, `${componentName}.js`),
-        path.join(signalsPath, `${componentName}.tsx`),
-        path.join(signalsPath, `${componentName}.ts`)
+        path.join(workspaceFolder.uri.fsPath, 'components', `${componentName}.jsx`),
+        path.join(workspaceFolder.uri.fsPath, 'components', `${componentName}.js`),
+        path.join(workspaceFolder.uri.fsPath, 'components', `${componentName}.tsx`),
+        path.join(workspaceFolder.uri.fsPath, 'components', `${componentName}.ts`),
+        path.join(workspaceFolder.uri.fsPath, 'src', 'components', `${componentName}.jsx`),
+        path.join(workspaceFolder.uri.fsPath, 'src', 'components', `${componentName}.js`),
+        path.join(workspaceFolder.uri.fsPath, 'src', 'components', `${componentName}.tsx`),
+        path.join(workspaceFolder.uri.fsPath, 'src', 'components', `${componentName}.ts`)
       ];
 
       for (const filePath of possiblePaths) {
         if (fs.existsSync(filePath)) {
+          console.log(`Found component at: ${filePath}`);
           return filePath;
         }
       }
@@ -74,148 +72,59 @@ class ComponentScanner {
   }
 
   /**
-   * Parse signals from component content
+   * Parse signals from component content - Simplified to focus on signals. pattern
    */
   parseSignals(content) {
     const signals = [];
+    const foundSignals = new Set();
     
-    // Pattern 1: Extract signals from docblock comments
-    const docblockPattern = /\/\*\*[\s\S]*?\*\//g;
-    const docblocks = content.match(docblockPattern) || [];
+    console.log('Parsing component content for signals...');
     
-    docblocks.forEach(docblock => {
-      // Look for signal definitions in docblock
-      const signalMatches = docblock.match(/@signal\s+(\w+)\s*-\s*(.+)/g);
-      if (signalMatches) {
-        signalMatches.forEach(match => {
-          const [, name, description] = match.match(/@signal\s+(\w+)\s*-\s*(.+)/);
-          signals.push({
-            name: name.trim(),
-            description: description.trim(),
-            category: 'documented'
-          });
-        });
-      }
-    });
-
-    // Pattern 2: Extract from props destructuring with signal-like names
-    const propsPattern = /function\s+\w+\s*\(\s*\{([^}]+)\}\s*\)/g;
-    const propsMatches = content.match(propsPattern);
-    
-    if (propsMatches) {
-      propsMatches.forEach(match => {
-        const props = match.match(/\{([^}]+)\}/)[1];
-        const propList = props.split(',').map(p => p.trim());
-        
-        propList.forEach(prop => {
-          // Look for signal-like prop names
-          if (this.isSignalName(prop)) {
-            signals.push({
-              name: prop,
-              description: `Signal: ${prop}`,
-              category: 'props'
-            });
-          }
-        });
-      });
-    }
-
-    // Pattern 3: Extract from inline signal comments
-    const commentPattern = /\/\/\s*(\w+)\s*[-:]\s*(.+)/g;
-    let commentMatch;
-    while ((commentMatch = commentPattern.exec(content)) !== null) {
-      const [, name, description] = commentMatch;
-      if (this.isSignalName(name)) {
-        signals.push({
-          name: name.trim(),
-          description: description.trim(),
-          category: 'commented'
-        });
-      }
-    }
-
-    // Pattern 4: Extract from signal arrays/objects in code
-    const signalArrayPattern = /(?:const|let|var)\s+\w*Signals?\s*=\s*\[([\s\S]*?)\]/g;
-    const signalObjectPattern = /(?:const|let|var)\s+\w*Signals?\s*=\s*\{([\s\S]*?)\}/g;
-    
-    [signalArrayPattern, signalObjectPattern].forEach(pattern => {
-      let match;
-      while ((match = pattern.exec(content)) !== null) {
-        const signalContent = match[1];
-        this.extractSignalsFromContent(signalContent, signals);
-      }
-    });
-
-    // Remove duplicates
-    const uniqueSignals = [];
-    const seen = new Set();
-    
-    signals.forEach(signal => {
-      if (!seen.has(signal.name)) {
-        seen.add(signal.name);
-        uniqueSignals.push(signal);
-      }
-    });
-
-    return uniqueSignals;
-  }
-
-  /**
-   * Extract signals from content string
-   */
-  extractSignalsFromContent(content, signals) {
-    // Match quoted signal names
-    const quotedPattern = /['"`]([^'"`]+)['"`]/g;
+    // Main pattern: signals.signalName (all occurrences)
+    const signalPattern = /signals\.([a-zA-Z][a-zA-Z0-9]*)/g;
     let match;
     
-    while ((match = quotedPattern.exec(content)) !== null) {
-      const name = match[1].trim();
-      if (this.isSignalName(name)) {
+    while ((match = signalPattern.exec(content)) !== null) {
+      const signalName = match[1];
+      
+      // Skip common non-signal properties
+      if (['className', 'children', 'style', 'id', 'key', 'ref', 'onClick', 'onSubmit', 'onChange', 'onFocus', 'onBlur', 'type', 'disabled'].includes(signalName)) {
+        continue;
+      }
+      
+      if (!foundSignals.has(signalName)) {
+        foundSignals.add(signalName);
         signals.push({
-          name,
-          description: `Signal: ${name}`,
-          category: 'defined'
+          name: signalName,
+          description: `Signal: ${signalName}`,
+          category: 'signal'
         });
       }
     }
-  }
-
-  /**
-   * Check if a name looks like a signal
-   */
-  isSignalName(name) {
-    // Remove common non-signal props
-    const nonSignals = ['className', 'children', 'style', 'id', 'key', 'ref', 'onClick', 'onSubmit', 'onChange', 'onFocus', 'onBlur'];
     
-    if (nonSignals.includes(name)) {
-      return false;
-    }
-
-    // Signal patterns: camelCase or specific patterns
-    const signalPatterns = [
-      /^[a-z]+[A-Z][a-zA-Z]*$/, // camelCase (hoverEnlarge, pressShrink)
-      /^(primary|secondary|accent|neutral|muted|subtle)$/, // tone signals
-      /^(xs|sm|md|lg|xl|2xl|3xl)$/, // size signals
-      /^(rounded|pill|square|circle)$/, // shape signals
-      /^(loading|disabled|error|success|warning|active|selected)$/, // state signals
-      /^(flex|grid|block|inline|inlineBlock|hidden|visible|absolute|relative|fixed|sticky)$/ // layout signals
-    ];
-
-    return signalPatterns.some(pattern => pattern.test(name));
+    console.log(`Found ${signals.length} signals:`, signals.map(s => s.name));
+    return signals;
   }
+
 
   /**
    * Get signals for a specific component
    */
   async getSignalsForComponent(componentName) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
+    console.log('Available workspace folders:', workspaceFolders?.map(wf => wf.uri.fsPath) || 'None');
+    
     const componentFile = this.findComponentFile(componentName, workspaceFolders);
     
     if (!componentFile) {
+      console.log(`Component file not found for: ${componentName}`);
       return [];
     }
 
-    return this.extractSignalsFromFile(componentFile);
+    console.log(`Found component file: ${componentFile}`);
+    const signals = this.extractSignalsFromFile(componentFile);
+    console.log(`Extracted signals:`, signals);
+    return signals;
   }
 
   /**
