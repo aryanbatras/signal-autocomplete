@@ -1,0 +1,44 @@
+{
+  "name": "signal-autocomplete",
+  "displayName": "signal-autocomplete",
+  "description": "Signal Autocomplete for Signal UI Components ",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.106.0"
+  },
+  "categories": [
+    "Other",
+    "Snippets",
+    "Programming Languages"
+  ],
+  "keywords": ["signal ui", "autocomplete", "components", "jsx", "props", "signals"],
+  "activationEvents": [
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [{
+      "command": "signal-autocomplete.toggle",
+      "title": "Toggle Signal UI Autocomplete"
+    }]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "pretest": "pnpm run lint",
+    "test": "vscode-test",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.106.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "eslint": "^9.39.1",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "vsce": "^2.15.0"
+  }
+}
