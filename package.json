@@ -1,8 +1,8 @@
 {
-  "name": "signal-autocomplete",
-  "displayName": "signal-autocomplete",
-  "description": "Signal Autocomplete for Signal UI Components ",
-  "version": "0.0.1",
+  "name": "signal-layers",
+  "displayName": "Signal Layers",
+  "description": "Intelligent autocomplete for Signal UI components with real-time signal suggestions",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.106.0"
   },
@@ -17,7 +17,11 @@
     "components",
     "jsx",
     "props",
-    "signals"
+    "signals",
+    "ui library",
+    "react",
+    "typescript",
+    "component library"
   ],
   "activationEvents": [
     "onLanguage:javascript",
@@ -29,8 +33,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "signal-autocomplete.toggle",
-        "title": "Toggle Signal UI Autocomplete"
+        "command": "signal-layers.toggle",
+        "title": "Toggle Signal Layers Autocomplete"
       }
     ]
   },
@@ -54,7 +58,18 @@
   "publisher": "aryanbatra",
   "repository": {
     "type": "git",
-    "url": "https://github.com/aryanbatra/signal-autocomplete"
+    "url": "https://github.com/aryanbatra/minimalist-ui"
   },
-  "homepage": "https://github.com/aryanbatra/signal-autocomplete#readme"
+  "homepage": "https://github.com/aryanbatra/minimalist-ui#readme",
+  "bugs": {
+    "url": "https://github.com/aryanbatra/minimalist-ui/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Aryan Batra",
+    "email": "aryanbatra@example.com"
+  },
+  "sponsor": {
+    "url": "https://github.com/aryanbatra"
+  }
 }

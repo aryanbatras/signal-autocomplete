@@ -107,31 +107,20 @@ class SignalCompletionProvider {
         vscode.CompletionItemKind.Property
       );
 
-      // Simple detail with signal description
-      completion.detail = signal.description;
+      // Simple detail with signal name
+      completion.detail = signal.name;
 
       // Add insert text with proper formatting
       completion.insertText = signal.name;
 
-      // Set priority and sort by category
-      const categoryPriority = {
-        'layer': 0,
-        'lease': 1, 
-        'spread': 2,
-        'composite': 3,
-        'signal': 4
-      };
-      
-      const priority = categoryPriority[signal.category] || 4;
-      
-      // Common signals get higher priority within their category
+      // Common signals get higher priority
       const commonSignals = ['primary', 'secondary', 'sm', 'md', 'lg', 'hoverEnlarge', 'children', 'onClick', 'disabled'];
       const isCommon = commonSignals.includes(signal.name);
       
       if (isCommon) {
-        completion.sortText = `${priority}0${signal.name}`;
+        completion.sortText = `0${signal.name}`;
       } else {
-        completion.sortText = `${priority}1${signal.name}`;
+        completion.sortText = `1${signal.name}`;
       }
 
       completions.push(completion);
@@ -153,10 +142,16 @@ function activate(context) {
     ['javascript', 'typescript', 'typescriptreact', 'javascriptreact'],
     new SignalCompletionProvider(),
     // Trigger on letters and numbers only
-    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    ' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
   );
 
-  context.subscriptions.push(completionProvider);
+  const spaceProvider = vscode.languages.registerCompletionItemProvider(
+    ['javascript', 'typescript', 'typescriptreact', 'javascriptreact'],
+    new SignalCompletionProvider(),
+    ' '
+  );
+
+  context.subscriptions.push(completionProvider, spaceProvider);
 
   // Add status bar indicator
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
