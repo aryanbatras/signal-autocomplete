@@ -1,8 +1,9 @@
 {
-  "name": "signal-layers",
-  "displayName": "Signal Layers",
+  "name": "signal-ui",
+  "displayName": "Signal UI",
   "description": "Intelligent autocomplete for Signal UI components with real-time signal suggestions",
-  "version": "0.1.0",
+  "icon": "assets/signalui.png",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.106.0"
   },
@@ -13,6 +14,9 @@
   ],
   "keywords": [
     "signal ui",
+    "signal",
+    "signal layer",
+    "signal layers",
     "autocomplete",
     "components",
     "jsx",
@@ -67,9 +71,9 @@
   "license": "MIT",
   "author": {
     "name": "Aryan Batra",
-    "email": "aryanbatra@example.com"
+    "email": "batraaryan03@gmail.com"
   },
   "sponsor": {
-    "url": "https://github.com/aryanbatra"
+    "url": "https://github.com/aryanbatras"
   }
 }
